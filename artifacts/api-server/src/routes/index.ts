@@ -6,18 +6,17 @@ const router: IRouter = Router();
 
 router.use(healthRouter);
 
-// Primary route: /api/review/...
+// Primary routes: /api/review/analyze, /api/review/autofix, etc.
 router.use("/review", reviewRouter);
 
-// Short alias: /api/analyze and /api/autofix resolve to the same handlers
-// This covers any frontend builds that call the shorter URL
-router.use("/analyze", (req, res, next) => {
-  req.url = "/analyze";
-  reviewRouter(req, res, next);
-});
-router.use("/autofix", (req, res, next) => {
-  req.url = "/autofix";
-  reviewRouter(req, res, next);
-});
+// Short aliases — any frontend calling /api/analyze, /api/autofix, or /api/fix
+// is routed to the same handlers without a redirect.
+for (const path of ["/analyze", "/autofix", "/fix"]) {
+  router.use(path, (req, res, next) => {
+    // /api/fix → same as /api/review/autofix
+    req.url = path === "/fix" ? "/autofix" : path;
+    reviewRouter(req, res, next);
+  });
+}
 
 export default router;
