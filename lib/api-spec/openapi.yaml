@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: review
+    description: Code review and security audit operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,77 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /review/analyze:
+    post:
+      operationId: analyzeCode
+      tags: [review]
+      summary: Analyze code for bugs and vulnerabilities
+      description: Submits code for AI-powered analysis returning categorized findings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzeCodeBody"
+      responses:
+        "200":
+          description: Analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisResult"
+
+  /review/autofix:
+    post:
+      operationId: autofixCode
+      tags: [review]
+      summary: Auto-fix code issues
+      description: Generates corrected code based on findings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AutofixCodeBody"
+      responses:
+        "200":
+          description: Fixed code result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutofixResult"
+
+  /review/history:
+    get:
+      operationId: getReviewHistory
+      tags: [review]
+      summary: Get recent review history
+      description: Returns the last 20 code reviews performed
+      responses:
+        "200":
+          description: List of past reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReviewSummary"
+
+  /review/stats:
+    get:
+      operationId: getReviewStats
+      tags: [review]
+      summary: Get review statistics
+      description: Returns aggregate counts of findings across all reviews
+      responses:
+        "200":
+          description: Statistics overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewStats"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +107,169 @@ components:
       required:
         - status
 
+    AnalyzeCodeBody:
+      type: object
+      properties:
+        code:
+          type: string
+          description: The code snippet to analyze
+        language:
+          type: string
+          description: Programming language (e.g. javascript, python, typescript)
+        githubUrl:
+          type: string
+          description: Optional GitHub URL to fetch code from
+      required:
+        - code
+
+    Finding:
+      type: object
+      properties:
+        id:
+          type: string
+        category:
+          type: string
+          enum: [critical_security, performance, style]
+        severity:
+          type: string
+          enum: [critical, high, medium, low, info]
+        title:
+          type: string
+        description:
+          type: string
+        line:
+          type: integer
+          description: Line number where issue occurs (optional)
+        suggestion:
+          type: string
+          description: Brief suggestion for fixing the issue
+      required:
+        - id
+        - category
+        - severity
+        - title
+        - description
+        - suggestion
+
+    AnalysisResult:
+      type: object
+      properties:
+        reviewId:
+          type: string
+        language:
+          type: string
+        findings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Finding"
+        summary:
+          type: string
+          description: High-level summary of the analysis
+        score:
+          type: integer
+          description: Code quality score from 0-100
+        criticalCount:
+          type: integer
+        performanceCount:
+          type: integer
+        styleCount:
+          type: integer
+      required:
+        - reviewId
+        - language
+        - findings
+        - summary
+        - score
+        - criticalCount
+        - performanceCount
+        - styleCount
+
+    AutofixCodeBody:
+      type: object
+      properties:
+        code:
+          type: string
+          description: The original code to fix
+        findings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Finding"
+          description: The findings to address
+        language:
+          type: string
+      required:
+        - code
+        - findings
+
+    AutofixResult:
+      type: object
+      properties:
+        fixedCode:
+          type: string
+          description: The corrected code
+        changesSummary:
+          type: string
+          description: Summary of what was changed
+        issuesFixed:
+          type: integer
+      required:
+        - fixedCode
+        - changesSummary
+        - issuesFixed
+
+    ReviewSummary:
+      type: object
+      properties:
+        reviewId:
+          type: string
+        language:
+          type: string
+        score:
+          type: integer
+        criticalCount:
+          type: integer
+        performanceCount:
+          type: integer
+        styleCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        codeSnippet:
+          type: string
+          description: First 100 chars of the reviewed code
+      required:
+        - reviewId
+        - language
+        - score
+        - criticalCount
+        - performanceCount
+        - styleCount
+        - createdAt
+        - codeSnippet
+
+    ReviewStats:
+      type: object
+      properties:
+        totalReviews:
+          type: integer
+        totalFindings:
+          type: integer
+        criticalTotal:
+          type: integer
+        performanceTotal:
+          type: integer
+        styleTotal:
+          type: integer
+        averageScore:
+          type: number
+        mostCommonIssue:
+          type: string
+      required:
+        - totalReviews
+        - totalFindings
+        - criticalTotal
+        - performanceTotal
+        - styleTotal
+        - averageScore
+        - mostCommonIssue

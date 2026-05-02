@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "DevGuard QA"
+version = "1.0.0"
+id = "artifacts/devguard-qa"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23022
+
+[services.development]
+run = "pnpm --filter @workspace/devguard-qa run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/devguard-qa", "run", "build" ]
+publicDir = "artifacts/devguard-qa/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23022"
+BASE_PATH = "/"

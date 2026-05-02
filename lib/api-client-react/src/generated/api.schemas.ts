@@ -8,3 +8,95 @@
 export interface HealthStatus {
   status: string;
 }
+
+export interface AnalyzeCodeBody {
+  /** The code snippet to analyze */
+  code: string;
+  /** Programming language (e.g. javascript, python, typescript) */
+  language?: string;
+  /** Optional GitHub URL to fetch code from */
+  githubUrl?: string;
+}
+
+export type FindingCategory =
+  (typeof FindingCategory)[keyof typeof FindingCategory];
+
+export const FindingCategory = {
+  critical_security: "critical_security",
+  performance: "performance",
+  style: "style",
+} as const;
+
+export type FindingSeverity =
+  (typeof FindingSeverity)[keyof typeof FindingSeverity];
+
+export const FindingSeverity = {
+  critical: "critical",
+  high: "high",
+  medium: "medium",
+  low: "low",
+  info: "info",
+} as const;
+
+export interface Finding {
+  id: string;
+  category: FindingCategory;
+  severity: FindingSeverity;
+  title: string;
+  description: string;
+  /** Line number where issue occurs (optional) */
+  line?: number;
+  /** Brief suggestion for fixing the issue */
+  suggestion: string;
+}
+
+export interface AnalysisResult {
+  reviewId: string;
+  language: string;
+  findings: Finding[];
+  /** High-level summary of the analysis */
+  summary: string;
+  /** Code quality score from 0-100 */
+  score: number;
+  criticalCount: number;
+  performanceCount: number;
+  styleCount: number;
+}
+
+export interface AutofixCodeBody {
+  /** The original code to fix */
+  code: string;
+  /** The findings to address */
+  findings: Finding[];
+  language?: string;
+}
+
+export interface AutofixResult {
+  /** The corrected code */
+  fixedCode: string;
+  /** Summary of what was changed */
+  changesSummary: string;
+  issuesFixed: number;
+}
+
+export interface ReviewSummary {
+  reviewId: string;
+  language: string;
+  score: number;
+  criticalCount: number;
+  performanceCount: number;
+  styleCount: number;
+  createdAt: string;
+  /** First 100 chars of the reviewed code */
+  codeSnippet: string;
+}
+
+export interface ReviewStats {
+  totalReviews: number;
+  totalFindings: number;
+  criticalTotal: number;
+  performanceTotal: number;
+  styleTotal: number;
+  averageScore: number;
+  mostCommonIssue: string;
+}

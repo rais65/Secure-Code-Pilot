@@ -6,4 +6,13 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./analysisResult";
+export * from "./analyzeCodeBody";
+export * from "./autofixCodeBody";
+export * from "./autofixResult";
+export * from "./finding";
+export * from "./findingCategory";
+export * from "./findingSeverity";
 export * from "./healthStatus";
+export * from "./reviewStats";
+export * from "./reviewSummary";

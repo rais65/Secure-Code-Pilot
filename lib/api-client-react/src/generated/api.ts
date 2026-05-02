@@ -5,18 +5,29 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  AnalysisResult,
+  AnalyzeCodeBody,
+  AutofixCodeBody,
+  AutofixResult,
+  HealthStatus,
+  ReviewStats,
+  ReviewSummary,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -92,6 +103,332 @@ export function useHealthCheck<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getHealthCheckQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Submits code for AI-powered analysis returning categorized findings
+ * @summary Analyze code for bugs and vulnerabilities
+ */
+export const getAnalyzeCodeUrl = () => {
+  return `/api/review/analyze`;
+};
+
+export const analyzeCode = async (
+  analyzeCodeBody: AnalyzeCodeBody,
+  options?: RequestInit,
+): Promise<AnalysisResult> => {
+  return customFetch<AnalysisResult>(getAnalyzeCodeUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(analyzeCodeBody),
+  });
+};
+
+export const getAnalyzeCodeMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof analyzeCode>>,
+    TError,
+    { data: BodyType<AnalyzeCodeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof analyzeCode>>,
+  TError,
+  { data: BodyType<AnalyzeCodeBody> },
+  TContext
+> => {
+  const mutationKey = ["analyzeCode"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof analyzeCode>>,
+    { data: BodyType<AnalyzeCodeBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return analyzeCode(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AnalyzeCodeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof analyzeCode>>
+>;
+export type AnalyzeCodeMutationBody = BodyType<AnalyzeCodeBody>;
+export type AnalyzeCodeMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Analyze code for bugs and vulnerabilities
+ */
+export const useAnalyzeCode = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof analyzeCode>>,
+    TError,
+    { data: BodyType<AnalyzeCodeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof analyzeCode>>,
+  TError,
+  { data: BodyType<AnalyzeCodeBody> },
+  TContext
+> => {
+  return useMutation(getAnalyzeCodeMutationOptions(options));
+};
+
+/**
+ * Generates corrected code based on findings
+ * @summary Auto-fix code issues
+ */
+export const getAutofixCodeUrl = () => {
+  return `/api/review/autofix`;
+};
+
+export const autofixCode = async (
+  autofixCodeBody: AutofixCodeBody,
+  options?: RequestInit,
+): Promise<AutofixResult> => {
+  return customFetch<AutofixResult>(getAutofixCodeUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(autofixCodeBody),
+  });
+};
+
+export const getAutofixCodeMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof autofixCode>>,
+    TError,
+    { data: BodyType<AutofixCodeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof autofixCode>>,
+  TError,
+  { data: BodyType<AutofixCodeBody> },
+  TContext
+> => {
+  const mutationKey = ["autofixCode"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof autofixCode>>,
+    { data: BodyType<AutofixCodeBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return autofixCode(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AutofixCodeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof autofixCode>>
+>;
+export type AutofixCodeMutationBody = BodyType<AutofixCodeBody>;
+export type AutofixCodeMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Auto-fix code issues
+ */
+export const useAutofixCode = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof autofixCode>>,
+    TError,
+    { data: BodyType<AutofixCodeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof autofixCode>>,
+  TError,
+  { data: BodyType<AutofixCodeBody> },
+  TContext
+> => {
+  return useMutation(getAutofixCodeMutationOptions(options));
+};
+
+/**
+ * Returns the last 20 code reviews performed
+ * @summary Get recent review history
+ */
+export const getGetReviewHistoryUrl = () => {
+  return `/api/review/history`;
+};
+
+export const getReviewHistory = async (
+  options?: RequestInit,
+): Promise<ReviewSummary[]> => {
+  return customFetch<ReviewSummary[]>(getGetReviewHistoryUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetReviewHistoryQueryKey = () => {
+  return [`/api/review/history`] as const;
+};
+
+export const getGetReviewHistoryQueryOptions = <
+  TData = Awaited<ReturnType<typeof getReviewHistory>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getReviewHistory>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetReviewHistoryQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getReviewHistory>>
+  > = ({ signal }) => getReviewHistory({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getReviewHistory>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetReviewHistoryQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getReviewHistory>>
+>;
+export type GetReviewHistoryQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get recent review history
+ */
+
+export function useGetReviewHistory<
+  TData = Awaited<ReturnType<typeof getReviewHistory>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getReviewHistory>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetReviewHistoryQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Returns aggregate counts of findings across all reviews
+ * @summary Get review statistics
+ */
+export const getGetReviewStatsUrl = () => {
+  return `/api/review/stats`;
+};
+
+export const getReviewStats = async (
+  options?: RequestInit,
+): Promise<ReviewStats> => {
+  return customFetch<ReviewStats>(getGetReviewStatsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetReviewStatsQueryKey = () => {
+  return [`/api/review/stats`] as const;
+};
+
+export const getGetReviewStatsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getReviewStats>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getReviewStats>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetReviewStatsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getReviewStats>>> = ({
+    signal,
+  }) => getReviewStats({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getReviewStats>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetReviewStatsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getReviewStats>>
+>;
+export type GetReviewStatsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get review statistics
+ */
+
+export function useGetReviewStats<
+  TData = Awaited<ReturnType<typeof getReviewStats>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getReviewStats>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetReviewStatsQueryOptions(options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

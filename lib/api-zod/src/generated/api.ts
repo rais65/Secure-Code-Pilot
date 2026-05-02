@@ -14,3 +14,108 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * Submits code for AI-powered analysis returning categorized findings
+ * @summary Analyze code for bugs and vulnerabilities
+ */
+export const AnalyzeCodeBody = zod.object({
+  code: zod.string().describe("The code snippet to analyze"),
+  language: zod
+    .string()
+    .optional()
+    .describe("Programming language (e.g. javascript, python, typescript)"),
+  githubUrl: zod
+    .string()
+    .optional()
+    .describe("Optional GitHub URL to fetch code from"),
+});
+
+export const AnalyzeCodeResponse = zod.object({
+  reviewId: zod.string(),
+  language: zod.string(),
+  findings: zod.array(
+    zod.object({
+      id: zod.string(),
+      category: zod.enum(["critical_security", "performance", "style"]),
+      severity: zod.enum(["critical", "high", "medium", "low", "info"]),
+      title: zod.string(),
+      description: zod.string(),
+      line: zod
+        .number()
+        .optional()
+        .describe("Line number where issue occurs (optional)"),
+      suggestion: zod
+        .string()
+        .describe("Brief suggestion for fixing the issue"),
+    }),
+  ),
+  summary: zod.string().describe("High-level summary of the analysis"),
+  score: zod.number().describe("Code quality score from 0-100"),
+  criticalCount: zod.number(),
+  performanceCount: zod.number(),
+  styleCount: zod.number(),
+});
+
+/**
+ * Generates corrected code based on findings
+ * @summary Auto-fix code issues
+ */
+export const AutofixCodeBody = zod.object({
+  code: zod.string().describe("The original code to fix"),
+  findings: zod
+    .array(
+      zod.object({
+        id: zod.string(),
+        category: zod.enum(["critical_security", "performance", "style"]),
+        severity: zod.enum(["critical", "high", "medium", "low", "info"]),
+        title: zod.string(),
+        description: zod.string(),
+        line: zod
+          .number()
+          .optional()
+          .describe("Line number where issue occurs (optional)"),
+        suggestion: zod
+          .string()
+          .describe("Brief suggestion for fixing the issue"),
+      }),
+    )
+    .describe("The findings to address"),
+  language: zod.string().optional(),
+});
+
+export const AutofixCodeResponse = zod.object({
+  fixedCode: zod.string().describe("The corrected code"),
+  changesSummary: zod.string().describe("Summary of what was changed"),
+  issuesFixed: zod.number(),
+});
+
+/**
+ * Returns the last 20 code reviews performed
+ * @summary Get recent review history
+ */
+export const GetReviewHistoryResponseItem = zod.object({
+  reviewId: zod.string(),
+  language: zod.string(),
+  score: zod.number(),
+  criticalCount: zod.number(),
+  performanceCount: zod.number(),
+  styleCount: zod.number(),
+  createdAt: zod.coerce.date(),
+  codeSnippet: zod.string().describe("First 100 chars of the reviewed code"),
+});
+export const GetReviewHistoryResponse = zod.array(GetReviewHistoryResponseItem);
+
+/**
+ * Returns aggregate counts of findings across all reviews
+ * @summary Get review statistics
+ */
+export const GetReviewStatsResponse = zod.object({
+  totalReviews: zod.number(),
+  totalFindings: zod.number(),
+  criticalTotal: zod.number(),
+  performanceTotal: zod.number(),
+  styleTotal: zod.number(),
+  averageScore: zod.number(),
+  mostCommonIssue: zod.string(),
+});
